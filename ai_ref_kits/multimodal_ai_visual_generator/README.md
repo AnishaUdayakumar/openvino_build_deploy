@@ -1,7 +1,7 @@
 
 <div align="center">
 
-# Visual Gen Studio with OpenVINO™ Toolkit  
+# Multimodal AI Visual Generator with OpenVINO™ Toolkit  
 Transform a single creative prompt into a vivid illustrated story or artistic T-shirt design using optimized LLMs and text-to-image models.
 
   <h4>
@@ -13,9 +13,9 @@ Transform a single creative prompt into a vivid illustrated story or artistic T-
 
 ---
 
-The Visual Gen Studio is a multimodal generative AI reference kit that demonstrates how large language models (LLMs) and diffusion-based image generation models can work together in a creative pipeline. It allows users to transform a single text prompt into detailed illustrated stories or stylized T-shirt design concepts, using optimized models for local deployment.
+The Multimodal AI Visual Generator is a multimodal generative AI reference kit that demonstrates how large language models (LLMs) and diffusion-based image generation models can work together in a creative pipeline. It allows users to transform a single text prompt into detailed illustrated stories or stylized T-shirt design concepts, using optimized models for local deployment.
 
-By combining LLM-driven prompt generation with image synthesis, the application shows how OpenVINO™ can accelerate multimodal generative AI workflows across Intel® NPUs, CPUs, integrated GPUs, and discrete GPUs. Visual Gen Studio delivers a complete pipeline, covering prompt input, scene generation, visual rendering, and PDF export.
+By combining LLM-driven prompt generation with image synthesis, the application shows how OpenVINO™ can accelerate multimodal generative AI workflows across Intel® NPUs, CPUs, integrated GPUs, and discrete GPUs. Multimodal AI Visual Generator delivers a complete pipeline, covering prompt input, scene generation, visual rendering, and PDF export.
 
 This kit serves as a practical foundation for building real-world applications in storytelling, branding, education, and other creative domains powered by generative AI.
 
@@ -97,7 +97,7 @@ To clone the repository and navigate into the directory, run the following comma
 
 ```bash
 git clone https://github.com/AnishaUdayakumar/openvino_build_deploy.git
-cd openvino_build_deploy/ai_ref_kits/visual_gen_studio
+cd openvino_build_deploy/ai_ref_kits/multimodal_ai_visual_generator
 ```
 
 ### Create a Virtual Environment
@@ -172,15 +172,16 @@ This app has two components: a FastAPI backend and a Streamlit frontend.
 ### Step 1: Run FastAPI (in Terminal 1)
 
 ```bash
-cd openvino_build_deploy/ai_ref_kits/visual_gen_studio
+cd openvino_build_deploy/ai_ref_kits/multimodal_ai_visual_generator
 source venv/bin/activate         # On Windows: venv\Scripts\activate
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
+> **Note:** If you're using different models, update the paths in `main.py` accordingly.
 
 ### Step 2: Run Streamlit UI (in Terminal 2)
 
 ```bash
-cd openvino_build_deploy/ai_ref_kits/visual_gen_studio
+cd openvino_build_deploy/ai_ref_kits/multimodal_ai_visual_generator
 source venv/bin/activate         # On Windows: venv\Scripts\activate
 streamlit run streamlit_app.py
 ```
@@ -208,4 +209,4 @@ Branding mode:
 
 <p align="right"><a href="#top">Back to top ⬆️</a></p>
 
-<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=7003a37c-568d-40a5-9718-0d021d8589ca?project=ai_ref_kits/visual_gen_studio?file=README.md" />
+<img referrerpolicy="no-referrer-when-downgrade" src="https://static.scarf.sh/a.png?x-pxid=7003a37c-568d-40a5-9718-0d021d8589ca?project=ai_ref_kits/multimodal_ai_visual_generator?file=README.md" />
