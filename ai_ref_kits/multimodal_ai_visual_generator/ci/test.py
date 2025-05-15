@@ -11,7 +11,7 @@ from convert_and_optimize_llm import convert_chat_model
 from convert_and_optimize_text2image import convert_image_model
 
 # ----- Configuration -----
-MODEL_DIR = Path("models")
+MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
 LLM_MODEL_TYPE = "qwen2-0.5B"  # Logical name used in app
 LLM_HF_MODEL_ID = "OpenVINO/Qwen2-0.5B-Instruct-int4-ov"
 LLM_LOCAL_DIR = MODEL_DIR / "qwen2-0.5B-INT4"
@@ -37,12 +37,12 @@ download_model_if_missing(LLM_HF_MODEL_ID, LLM_LOCAL_DIR)
 download_model_if_missing(IMAGE_HF_MODEL_ID, IMAGE_LOCAL_DIR)
 
 # ----- Step 2: Export Models if Needed (will be skipped if already present) -----
-print("?? Verifying model export state...")
+print("Verifying model export state...")
 convert_chat_model(LLM_MODEL_TYPE, PRECISION, MODEL_DIR)
 convert_image_model(IMAGE_MODEL_TYPE, PRECISION, MODEL_DIR)
 
 # ----- Step 3: Launch FastAPI Backend -----
-print("?? Launching FastAPI server...")
+print("Launching FastAPI server...")
 
 main_path = Path(__file__).resolve().parent.parent / "main.py"
 env = os.environ.copy()
@@ -69,7 +69,7 @@ try:
         except requests.ConnectionError:
             time.sleep(1)
     else:
-        raise RuntimeError("?? FastAPI server did not start within 130 seconds.")
+        raise RuntimeError("FastAPI server did not start within 130 seconds.")
 
     # ----- Step 4: Test Story Prompt Generation -----
     print("Testing /generate_story_prompts endpoint...")
@@ -79,10 +79,10 @@ try:
     )
     assert response1.status_code == 200, f"? Story generation failed: {response1.text}"
     scenes = response1.json()["scenes"]
-    print("? Scene generation passed. Example:", scenes)
+    print("Scene generation passed. Example:", scenes)
 
     # ----- Step 5: Test Image Generation -----
-    print("?? Testing /generate_images endpoint...")
+    print("Testing /generate_images endpoint...")
     response2 = requests.post(
         "http://localhost:8000/generate_images",
         json={"prompt": scenes[0]}
@@ -92,6 +92,6 @@ try:
     print("? Image generation passed. Base64 (truncated):", image[:100])
 
 finally:
-    print("?? Shutting down FastAPI server...")
+    print("Shutting down FastAPI server...")
     process.terminate()
     process.wait()
