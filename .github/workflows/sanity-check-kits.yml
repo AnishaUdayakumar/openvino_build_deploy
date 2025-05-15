@@ -185,3 +185,29 @@ jobs:
         with:
           command: jupyter nbconvert --to notebook --execute *.ipynb
           project: ${{ matrix.subproject }}
+          
+  fastapi:
+    needs: find-subprojects
+    if: ${{ needs.find-subprojects.outputs.fastapi != '[]' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.12"]
+        subproject: ${{ fromJson(needs.find-subprojects.outputs.fastapi) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/reusable-steps/setup-os
+
+      - uses: ./.github/reusable-steps/setup-python
+        with:
+          python: ${{ matrix.python }}
+          project: ${{ matrix.subproject }}
+
+      - name: Run FastAPI test.py
+        shell: bash
+        run: |
+          python ${{ matrix.subproject }}/ci/test.py
+          
