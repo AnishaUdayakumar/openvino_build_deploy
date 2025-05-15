@@ -63,7 +63,7 @@ try:
     # Wait for FastAPI to become responsive
     for _ in range(130):
         try:
-            r = requests.get("http://localhost:8000/docs", timeout=2)
+            r = requests.get("http://localhost:8000/docs", timeout=260)
             if r.status_code == 200:
                 break
         except requests.ConnectionError:
@@ -77,7 +77,7 @@ try:
         "http://localhost:8000/generate_story_prompts",
         json={"prompt": "A flying whale in space"}
     )
-    assert response1.status_code == 200, f"? Story generation failed: {response1.text}"
+    assert response1.status_code == 200, f"Story generation failed: {response1.text}"
     scenes = response1.json()["scenes"]
     print("Scene generation passed. Example:", scenes)
 
@@ -87,9 +87,9 @@ try:
         "http://localhost:8000/generate_images",
         json={"prompt": scenes[0]}
     )
-    assert response2.status_code == 200, f"? Image generation failed: {response2.text}"
+    assert response2.status_code == 200, f"Image generation failed: {response2.text}"
     image = response2.json()["image"]
-    print("? Image generation passed. Base64 (truncated):", image[:100])
+    print("Image generation passed. Base64 (truncated):", image[:100])
 
 finally:
     print("Shutting down FastAPI server...")

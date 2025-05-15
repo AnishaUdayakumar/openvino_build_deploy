@@ -10,17 +10,15 @@ import sys
 import yaml
 import subprocess
 import openvino_genai as ov_genai
+import openvino as ov
 import os
 import random
-
-
 
 # Import watermark function
 external_utils_path = (Path(__file__).resolve().parents[2] / "demos" / "utils").resolve()
 if not external_utils_path.exists():
     raise RuntimeError(f"utils folder not found at {external_utils_path}")
 sys.path.append(str(external_utils_path))
-
 from demo_utils import draw_ov_watermark
 
 app = FastAPI()
@@ -37,7 +35,6 @@ app.add_middleware(
 PROJECT_ROOT = Path(__file__).resolve().parent
 CONFIG_PATH = PROJECT_ROOT / "config" / "illustration.yaml"
 
-
 # ---------- Model Config (with CI override) ----------
 LLM_MODEL_TYPE = os.getenv("LLM_MODEL_TYPE", "qwen2-7B")
 IMAGE_MODEL_TYPE = os.getenv("IMAGE_MODEL_TYPE", "flux.1-schnell")
@@ -50,28 +47,37 @@ llm_model_dir = PROJECT_ROOT / "models" / f"{LLM_MODEL_TYPE}-{PRECISION.upper()}
 with open(CONFIG_PATH, "r") as f:
     config = yaml.safe_load(f)
 
-# ---------- Lazy load models if available ----------
+# ---------- Determine Device (GPU if available, else fallback) ----------
+core = ov.Core()
+available_devices = core.available_devices
+if "GPU" in available_devices:
+    preferred_device = "GPU"
+else:
+    preferred_device = available_devices[0] if available_devices else "CPU"
+print(f"Using OpenVINO device: {preferred_device}")
+
+# ---------- Load models ----------
 image_pipe = None
 llm_pipe = None
 
 if image_model_dir.exists():
     try:
-        image_pipe = ov_genai.Text2ImagePipeline(image_model_dir, device="GPU")
-        print("Image model loaded.")
+        image_pipe = ov_genai.Text2ImagePipeline(image_model_dir, device=preferred_device)
+        print("Image model loaded successfully.")
     except Exception as e:
-        print(f"Failed to load Image model: {e}")
+        print(f"Failed to load image model: {e}")
 else:
     print(f"Image model not found at {image_model_dir}")
 
 if llm_model_dir.exists():
     try:
-        llm_pipe = ov_genai.LLMPipeline(str(llm_model_dir), device="GPU")
-        print("LLM model loaded.")
+        llm_pipe = ov_genai.LLMPipeline(str(llm_model_dir), device=preferred_device)
+        print("LLM model loaded successfully.")
     except Exception as e:
         print(f"Failed to load LLM model: {e}")
 else:
     print(f"LLM model not found at {llm_model_dir}")
-    
+
 llm_config = ov_genai.GenerationConfig()
 llm_config.max_new_tokens = 256
 llm_config.apply_chat_template = False
@@ -83,11 +89,12 @@ class PromptRequest(BaseModel):
 class StoryRequest(BaseModel):
     prompt: str
 
-# ---------- LLM Endpoint (Story Splitter) ---------
+# ---------- LLM Endpoint (Story Splitter) ----------
 @app.post("/generate_story_prompts")
 def generate_story_prompts(request: StoryRequest, req: Request):
     if not llm_pipe:
         return JSONResponse(status_code=503, content={"error": "LLM model not available. Please export it before using this endpoint."})
+
     config_type = req.query_params.get("config", "illustration")
     config_file = PROJECT_ROOT / "config" / f"{config_type}.yaml"
     if not config_file.exists():
@@ -96,7 +103,6 @@ def generate_story_prompts(request: StoryRequest, req: Request):
         config = yaml.safe_load(f)
 
     user_prompt = request.prompt
-
     instruction = config["instruction_template"].replace("{user_prompt}", user_prompt)
 
     output = []
@@ -143,10 +149,10 @@ def generate_story_prompts(request: StoryRequest, req: Request):
     while len(final_scenes) < 4:
         fallback_suffix = suffixes[len(final_scenes)] if len(suffixes) > len(final_scenes) else suffixes[-1]
         final_scenes.append(config["fallback_scene"] + ". " + fallback_suffix)
-   
+
     return {"scenes": final_scenes}
 
-# ---------- Image Model Endpoint (Image Generator) ----------
+# ---------- Image Model Endpoint ----------
 @app.post("/generate_images")
 def generate_image(request: PromptRequest):
     if not image_pipe:
@@ -155,7 +161,6 @@ def generate_image(request: PromptRequest):
     prompt = request.prompt
     height = 512
     width = 512
-  #  seed = 191524753
     seed = random.randint(200_000_001, 2_000_000_000)
     steps = 4
 
@@ -175,11 +180,9 @@ def generate_image(request: PromptRequest):
         width=width
     )
 
-    # Add watermark using OpenCV
-    image_np = result.data[0]  # NumPy array
+    image_np = result.data[0]
     draw_ov_watermark(image_np, size=0.6)
 
-    # Convert to PIL and encode
     image = Image.fromarray(image_np)
     buffer = BytesIO()
     image.save(buffer, format="PNG")
@@ -187,7 +190,7 @@ def generate_image(request: PromptRequest):
 
     return {"image": img_str}
 
-# ---------- Server Start Print ----------
+# ---------- Server Start Message ----------
 print("FastAPI backend is running...")
 print("In a separate terminal, start the Streamlit app using:")
 print("streamlit run streamlit_app.py")
