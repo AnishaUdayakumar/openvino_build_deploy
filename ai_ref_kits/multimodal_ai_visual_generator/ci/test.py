@@ -3,6 +3,7 @@ import time
 import requests
 import os
 import sys
+import platform
 from pathlib import Path
 
 # Add project root to path and import model converters
@@ -61,15 +62,16 @@ process = subprocess.Popen([
 
 try:
     # Wait for FastAPI to become responsive
-    for _ in range(230):
+    retries = 1000 if platform.system() == "Darwin" else 130
+    for _ in range(retries):
         try:
-            r = requests.get("http://localhost:8000/docs", timeout=2)
+            r = requests.get("http://localhost:8000/docs", timeout=4)
             if r.status_code == 200:
                 break
         except requests.ConnectionError:
             time.sleep(1)
     else:
-        raise RuntimeError("FastAPI server did not start within 230 seconds.")
+        raise RuntimeError("FastAPI server did not start within {retries * 2} seconds.")
 
     # ----- Step 4: Test Story Prompt Generation -----
     print("Testing /generate_story_prompts endpoint...")
