@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: "0 2 * * *"
   pull_request:
-    branches: [master]
+    branches: [master, AnishaUdayakumar-visual-gen-studio]
   push:
     branches: [master]
   workflow_dispatch:
@@ -25,6 +25,8 @@ jobs:
       webcam: ${{ steps.categorize-subprojects.outputs.webcam }}
       python: ${{ steps.categorize-subprojects.outputs.python }}
       notebook: ${{ steps.categorize-subprojects.outputs.notebook }}
+      fastapi: ${{ steps.categorize-subprojects.outputs.fastapi }}
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
