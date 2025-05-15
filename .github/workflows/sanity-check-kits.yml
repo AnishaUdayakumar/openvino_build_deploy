@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: "0 2 * * *"
   pull_request:
-    branches: [master]
+    branches: [master, AnishaUdayakumar-visual-gen-studio, ci_testing]
   push:
     branches: [master]
   workflow_dispatch:
@@ -25,6 +25,8 @@ jobs:
       webcam: ${{ steps.categorize-subprojects.outputs.webcam }}
       python: ${{ steps.categorize-subprojects.outputs.python }}
       notebook: ${{ steps.categorize-subprojects.outputs.notebook }}
+      fastapi: ${{ steps.categorize-subprojects.outputs.fastapi }}
+
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -185,3 +187,29 @@ jobs:
         with:
           command: jupyter nbconvert --to notebook --execute *.ipynb
           project: ${{ matrix.subproject }}
+          
+  fastapi:
+    needs: find-subprojects
+    if: ${{ needs.find-subprojects.outputs.fastapi != '[]' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.10", "3.12"]
+        subproject: ${{ fromJson(needs.find-subprojects.outputs.fastapi) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/reusable-steps/setup-os
+
+      - uses: ./.github/reusable-steps/setup-python
+        with:
+          python: ${{ matrix.python }}
+          project: ${{ matrix.subproject }}
+
+      - name: Run FastAPI test.py
+        shell: bash
+        run: |
+          python ${{ matrix.subproject }}/ci/test.py
+          
