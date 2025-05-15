@@ -21,8 +21,17 @@ convert_chat_model(LLM_MODEL_TYPE, PRECISION, MODEL_DIR)
 convert_image_model(IMAGE_MODEL_TYPE, PRECISION, MODEL_DIR)
 
 # ----- Step 2: Launch FastAPI Backend -----
+# ----- Step 2: Launch FastAPI Backend -----
 print("Launching FastAPI server...")
-process = subprocess.Popen([sys.executable, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000"])
+main_path = Path(__file__).resolve().parent.parent / "main.py"
+process = subprocess.Popen([
+    sys.executable,
+    "-m", "uvicorn",
+    f"{main_path.stem}:app",
+    "--app-dir", str(main_path.parent),
+    "--host", "127.0.0.1",
+    "--port", "8000"
+])
 
 try:
     # Wait for FastAPI to become responsive
