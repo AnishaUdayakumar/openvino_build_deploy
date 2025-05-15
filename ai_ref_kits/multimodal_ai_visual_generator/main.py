@@ -11,6 +11,8 @@ import yaml
 import subprocess
 import openvino_genai as ov_genai
 import os
+import random
+
 
 
 # Import watermark function
@@ -153,7 +155,8 @@ def generate_image(request: PromptRequest):
     prompt = request.prompt
     height = 512
     width = 512
-    seed = 191524753
+  #  seed = 191524753
+    seed = random.randint(200_000_001, 2_000_000_000)
     steps = 4
 
     generator = ov_genai.TorchGenerator(seed)
