@@ -14,7 +14,7 @@ from convert_and_optimize_text2image import convert_image_model
 MODEL_DIR = Path("models")
 LLM_MODEL_TYPE = "qwen2-0.5B"  # Logical name used in app
 LLM_HF_MODEL_ID = "OpenVINO/Qwen2-0.5B-Instruct-int4-ov"
-LLM_LOCAL_DIR = MODEL_DIR / "qwen2-1.5B-INT4"
+LLM_LOCAL_DIR = MODEL_DIR / "qwen2-0.5B-INT4"
 
 IMAGE_MODEL_TYPE = "flux.1-schnell"
 IMAGE_HF_MODEL_ID = "OpenVINO/FLUX.1-schnell-int4-ov"
@@ -72,7 +72,7 @@ try:
         raise RuntimeError("?? FastAPI server did not start within 130 seconds.")
 
     # ----- Step 4: Test Story Prompt Generation -----
-    print("?? Testing /generate_story_prompts endpoint...")
+    print("Testing /generate_story_prompts endpoint...")
     response1 = requests.post(
         "http://localhost:8000/generate_story_prompts",
         json={"prompt": "A flying whale in space"}
