@@ -14,6 +14,7 @@ MODEL_MAPPING = {
     "flux.1-dev": "black-forest-labs/FLUX.1-dev",
     "tiny-sd": "segmind/tiny-sd",
     "stable-diffusionv3-large": "stabilityai/stable-diffusion-3.5-large",
+    "LCM_Dream": "OpenVINO/LCM_Dreamshaper_v7-int8-ov",
     "stable-diffusionv3-medium": "stabilityai/stable-diffusion-3.5-medium",
     "stable-diffusion-2-1": "stabilityai/stable-diffusion-2-1",
 }
@@ -44,7 +45,7 @@ def run_optimum_export(model_id: str, output_dir: Path, precision: str):
 
     cmd.append(str(output_dir))
 
-    print(f"\n🚀 Exporting with command:\n{' '.join(cmd)}\n")
+    print(f"\n Exporting with command:\n{' '.join(cmd)}\n")
     subprocess.run(cmd, shell=(platform.system() == "Windows"), check=True)
 
 def convert_image_model(model_type: str, precision: str, model_dir: Path) -> Path:
@@ -55,12 +56,12 @@ def convert_image_model(model_type: str, precision: str, model_dir: Path) -> Pat
     if output_dir.exists():
         missing = [f for f in CRITICAL_FILES if not (output_dir / f).exists()]
         if not missing:
-            print(f"\n✅ Model already exported at: {output_dir}")
-            print("ℹ️ Skipping re-export.\n")
+            print(f"Model already exported at: {output_dir}")
+            print("Skipping re-export.\n")
             return output_dir
         else:
-            print(f"\n⚠️ Export folder exists but missing files: {missing}")
-            print("🔁 Re-exporting model...\n")
+            print(f"Export folder exists but missing files: {missing}")
+            print("Re-exporting model...\n")
 
     run_optimum_export(model_id, output_dir, precision)
 
