@@ -10,6 +10,7 @@ import sys
 import yaml
 import subprocess
 import openvino_genai as ov_genai
+import os
 
 
 # Import watermark function
@@ -35,9 +36,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 CONFIG_PATH = PROJECT_ROOT / "config" / "illustration.yaml"
 
 
-IMAGE_MODEL_TYPE = "flux.1-schnell"
-LLM_MODEL_TYPE = "qwen2-7B"
-PRECISION = "int4"
+# ---------- Model Config (with CI override) ----------
+LLM_MODEL_TYPE = os.getenv("LLM_MODEL_TYPE", "qwen2-7B")
+IMAGE_MODEL_TYPE = os.getenv("IMAGE_MODEL_TYPE", "flux.1-schnell")
+PRECISION = os.getenv("PRECISION", "int4")
 
 image_model_dir = PROJECT_ROOT / "models" / f"{IMAGE_MODEL_TYPE}-{PRECISION.upper()}"
 llm_model_dir = PROJECT_ROOT / "models" / f"{LLM_MODEL_TYPE}-{PRECISION.upper()}"
@@ -183,6 +185,6 @@ def generate_image(request: PromptRequest):
     return {"image": img_str}
 
 # ---------- Server Start Print ----------
-print("FastAPI backend is running..")
+print("FastAPI backend is running...")
 print("In a separate terminal, start the Streamlit app using:")
 print("streamlit run streamlit_app.py")
