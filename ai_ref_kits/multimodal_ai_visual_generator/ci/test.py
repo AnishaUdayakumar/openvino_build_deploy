@@ -59,6 +59,6 @@ try:
     print("Image generation test passed.")
 
 finally:
-    print("Shutting down FastAPI server...")
+    print("Shutting down FastAPI server....")
     process.terminate()
     process.wait()
