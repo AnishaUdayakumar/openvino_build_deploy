@@ -183,6 +183,6 @@ def generate_image(request: PromptRequest):
     return {"image": img_str}
 
 # ---------- Server Start Print ----------
-print("FastAPI backend is running...")
+print("FastAPI backend is running..")
 print("In a separate terminal, start the Streamlit app using:")
 print("streamlit run streamlit_app.py")
