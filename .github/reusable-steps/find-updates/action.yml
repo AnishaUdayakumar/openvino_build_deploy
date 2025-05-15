@@ -24,7 +24,7 @@ runs:
           changed_files=$(git diff --name-only origin/"$base_ref"..HEAD .github ${{ inputs.dir }})
 
 
-          if echo "$changed_files" | grep -q -e '.github/reusable-steps' -e '.github/workflows/${{ inputs.ci_config_file }}'; then
+          if echo "$changed_files" | grep -q -e '.github/reusable-steps' -e ".github/workflows/${{ inputs.ci_config_file }}"; then
             # Workflow file changed; run all subprojects
             subproject_dirs=$(find ${{ inputs.dir }} -mindepth 1 -maxdepth 1 -type d ! -name utils | tr '\n' ' ')
           elif echo "$changed_files" | grep -e '^${{ inputs.dir }}'; then
