@@ -202,11 +202,17 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: ./.github/reusable-steps/setup-os
+      
+      - name: Disable SSL verification for Git LFS
+        run: git config --global http.sslVerify false      
 
       - uses: ./.github/reusable-steps/setup-python
         with:
           python: ${{ matrix.python }}
           project: ${{ matrix.subproject }}
+          
+      - name: Re-enable SSL verification
+        run: git config --global http.sslVerify true          
 
       - name: Run FastAPI test.py
         shell: bash
