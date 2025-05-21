@@ -194,3 +194,10 @@ def generate_image(request: PromptRequest):
 print("FastAPI backend is running...")
 print("In a separate terminal, start the Streamlit app using:")
 print("streamlit run streamlit_app.py")
+
+# ---------- Health Check Endpoint ----------
+@app.get("/health")
+def health_check():
+    if image_pipe and llm_pipe:
+        return {"status": "ready"}
+    return JSONResponse(status_code=503, content={"error": "Models not loaded"})
