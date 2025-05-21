@@ -5,7 +5,7 @@ import os
 import sys
 import platform
 from pathlib import Path
-from huggingface_hub import snapshot_download
+#from huggingface_hub import snapshot_download
 
 # Add project root to path and import model converters
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -28,7 +28,11 @@ PRECISION = "int4"
 def download_model_if_missing(model_id: str, local_dir: Path):
     if not local_dir.exists():
         print(f"Downloading {model_id} to {local_dir} ...")
-        result = snapshot_download(repo_id=model_id, local_dir=local_dir, local_dir_use_symlinks=False)
+        result = subprocess.run([
+        "huggingface-cli", "download", model_id,
+        "--local-dir", str(local_dir)
+        ], check=True)
+
     else:
         print(f"Model already exists at {local_dir}, skipping download.")
 
