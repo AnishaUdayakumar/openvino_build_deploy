@@ -20,6 +20,7 @@ MODEL_MAPPING = {
     "mistral-7B-Instruct-v0.3": "mistralai/Mistral-7B-Instruct-v0.3",
     "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",
     "qwen2-7B": "Qwen/Qwen2-7B-Instruct",
+    "qwen2-0.5B": "Qwen/Qwen2-0.5B-Instruct",
     "DeepSeek-R1-Distill-Qwen-1.5B": "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B",
 }
 
