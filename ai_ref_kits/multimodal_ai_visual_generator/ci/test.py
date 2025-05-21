@@ -94,6 +94,6 @@ try:
     print("Image generation passed. Base64 (truncated):", image[:100])
 
 finally:
-    print("Shutting down FastAPI server...")
+    print("Shutting down FastAPI server....")
     process.terminate()
     process.wait()
