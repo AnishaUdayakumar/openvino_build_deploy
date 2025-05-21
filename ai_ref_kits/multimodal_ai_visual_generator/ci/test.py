@@ -5,6 +5,7 @@ import os
 import sys
 import platform
 from pathlib import Path
+#from huggingface_hub import snapshot_download
 
 # Add project root to path and import model converters
 sys.path.append(str(Path(__file__).resolve().parent.parent))
@@ -28,9 +29,10 @@ def download_model_if_missing(model_id: str, local_dir: Path):
     if not local_dir.exists():
         print(f"Downloading {model_id} to {local_dir} ...")
         result = subprocess.run([
-            "huggingface-cli", "download", model_id,
-            "--local-dir", str(local_dir)
+        "huggingface-cli", "download", model_id,
+        "--local-dir", str(local_dir)
         ], check=True)
+
     else:
         print(f"Model already exists at {local_dir}, skipping download.")
 
@@ -51,27 +53,36 @@ env["LLM_MODEL_TYPE"] = LLM_MODEL_TYPE
 env["IMAGE_MODEL_TYPE"] = IMAGE_MODEL_TYPE
 env["PRECISION"] = PRECISION
 
-process = subprocess.Popen([
+uvicorn_cmd = [
     sys.executable,
     "-m", "uvicorn",
     f"{main_path.stem}:app",
     "--app-dir", str(main_path.parent),
     "--host", "127.0.0.1",
     "--port", "8000"
-], env=env)
+]
+
+# Add --factory only on macOS
+if platform.system() == "Darwin":
+    uvicorn_cmd.append("--factory")
+
+process = subprocess.Popen(uvicorn_cmd, env=env)
 
 try:
-    # Wait for FastAPI to become responsive
+    # ----- Wait for FastAPI to become ready -----
     retries = 1000 if platform.system() == "Darwin" else 130
+    time.sleep(10)  # Give some time for server startup and model loading
+
     for _ in range(retries):
         try:
-            r = requests.get("http://localhost:8000/docs", timeout=4)
+            r = requests.get("http://localhost:8000/health", timeout=4)
             if r.status_code == 200:
+                print("FastAPI is ready.")
                 break
         except requests.ConnectionError:
             time.sleep(1)
     else:
-        raise RuntimeError("FastAPI server did not start within {retries * 2} seconds.")
+        raise RuntimeError(f"FastAPI server did not start within {retries * 2} seconds.")
 
     # ----- Step 4: Test Story Prompt Generation -----
     print("Testing /generate_story_prompts endpoint...")
