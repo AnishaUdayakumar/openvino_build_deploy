@@ -214,4 +214,4 @@ if image_pipe or llm_pipe:
     logger.info("In a separate terminal, start the Streamlit app using: streamlit run streamlit_app.py")
 else:
     logger.warning("FastAPI backend is running, but no models were loaded.")
-    logger.warning("Please export models before running the Streamlit app.")
+    logger.warning("Please export models before running the Streamlit app.")# ci check trigger
