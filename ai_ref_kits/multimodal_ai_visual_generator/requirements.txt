@@ -31,3 +31,4 @@ click>=8.0
 # Utility
 opencv-python==4.11.0.86
 numpy==1.26.4
+# ci check trigger

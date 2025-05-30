@@ -2,7 +2,6 @@ import argparse
 import subprocess
 import platform
 from pathlib import Path
-import json
 import os
 import logging
 
@@ -16,6 +15,7 @@ MODEL_MAPPING = {
     "stable-diffusionv3-large": "stabilityai/stable-diffusion-3.5-large",
     "stable-diffusionv3-medium": "stabilityai/stable-diffusion-3.5-medium",
     "stable-diffusion-2-1": "stabilityai/stable-diffusion-2-1",
+    "lcm": "SimianLuo/LCM_Dreamshaper_v7",
 }
 
 CRITICAL_FILES = [
@@ -132,7 +132,7 @@ if __name__ == "__main__":
             print(f"  {i}. {key}")
         choice = input("Enter model number to export: ").strip()
         if not choice.isdigit() or not (1 <= int(choice) <= len(model_keys)):
-            print("Invalid choice. Exiting.")
+            print("Invalid choice. Exiting")
             exit(1)
         args.image_model_type = model_keys[int(choice) - 1]
 
