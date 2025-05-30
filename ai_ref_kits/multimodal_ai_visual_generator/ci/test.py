@@ -3,6 +3,7 @@ import time
 import requests
 import sys
 import os
+import platform
 from pathlib import Path
 import logging
 
@@ -19,10 +20,31 @@ from convert_and_optimize_llm import convert_chat_model
 from convert_and_optimize_text2image import convert_image_model
 
 # ----- Configuration -----
-MODEL_DIR = Path("models")
+MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
 LLM_MODEL_TYPE = "tiny-llama-1b-chat"
 IMAGE_MODEL_TYPE = "lcm"
 PRECISION = "int4"
+
+# Hugging Face model IDs
+LLM_HF_MODEL_ID = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+IMAGE_HF_MODEL_ID = "SimianLuo/LCM_Dreamshaper_v7"
+
+LLM_LOCAL_DIR = MODEL_DIR / f"{LLM_MODEL_TYPE.upper()}"
+IMAGE_LOCAL_DIR = MODEL_DIR / f"{IMAGE_MODEL_TYPE.upper()}"
+
+# ----- Step 0: Download Pre-exported Models if Missing -----
+def download_model_if_missing(model_id: str, local_dir: Path):
+    if not local_dir.exists():
+        logger.info(f"Downloading {model_id} to {local_dir} ...")
+        subprocess.run([
+            "huggingface-cli", "download", model_id,
+            "--local-dir", str(local_dir)
+        ], check=True)
+    else:
+        logger.info(f"Model already exists at {local_dir}, skipping download.")
+
+download_model_if_missing(LLM_HF_MODEL_ID, LLM_LOCAL_DIR)
+download_model_if_missing(IMAGE_HF_MODEL_ID, IMAGE_LOCAL_DIR)
 
 # ----- Step 1: Export Models if Needed -----
 logger.info("Checking and exporting LLM + Text2Image models if necessary...")
@@ -38,22 +60,29 @@ env.update({
     "MODEL_PRECISION": PRECISION
 })
 
-process = subprocess.Popen(
-    [sys.executable, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8000"],
-    env=env
-)
+main_path = Path(__file__).resolve().parent.parent / "main.py"
+
+process = subprocess.Popen([
+    sys.executable,
+    "-m", "uvicorn",
+    f"{main_path.stem}:app",
+    "--app-dir", str(main_path.parent),
+    "--host", "127.0.0.1",
+    "--port", "8000"
+], env=env)
 
 try:
-    # Wait up to ~130 seconds (130 retries x 1s sleep) for FastAPI server to come up
-    for _ in range(130):
+    # Wait for FastAPI to become responsive
+    retries = 1000 if platform.system() == "Darwin" else 130
+    for _ in range(retries):
         try:
-            r = requests.get("http://localhost:8000/docs", timeout=2)
+            r = requests.get("http://localhost:8000/docs", timeout=4)
             if r.status_code == 200:
                 break
         except requests.ConnectionError:
             time.sleep(1)
     else:
-        raise RuntimeError("FastAPI server did not start within 130 seconds.")
+        raise RuntimeError("FastAPI server did not start within timeout period.")
 
     # ----- Step 3: Test Story Prompt Generation -----
     logger.info("Testing /generate_story_prompts endpoint...")
@@ -63,8 +92,7 @@ try:
     )
     assert response1.status_code == 200, f"Story generation failed: {response1.text}"
     scenes = response1.json()["scenes"]
-    logger.info("Generated scenes: %s", scenes)
-    logger.info("Scene prompt generation test passed.")
+    logger.info("Scene prompt generation test passed. Example: %s", scenes)
 
     # ----- Step 4: Test Image Generation -----
     logger.info("Testing /generate_images endpoint...")
@@ -74,8 +102,7 @@ try:
     )
     assert response2.status_code == 200, f"Image generation failed: {response2.text}"
     image = response2.json()["image"]
-    logger.info("Image string (truncated): %s", image[:100])
-    logger.info("Image generation test passed.")
+    logger.info("Image generation test passed. Base64 (truncated): %s", image[:100])
 
 finally:
     logger.info("Shutting down FastAPI server...")
