@@ -25,28 +25,7 @@ LLM_MODEL_TYPE = "tiny-llama-1b-chat"
 IMAGE_MODEL_TYPE = "lcm"
 PRECISION = "int4"
 
-# Hugging Face model IDs
-LLM_HF_MODEL_ID = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
-IMAGE_HF_MODEL_ID = "SimianLuo/LCM_Dreamshaper_v7"
-
-LLM_LOCAL_DIR = MODEL_DIR / f"{LLM_MODEL_TYPE.upper()}"
-IMAGE_LOCAL_DIR = MODEL_DIR / f"{IMAGE_MODEL_TYPE.upper()}"
-
-# ----- Step 0: Download Pre-exported Models if Missing -----
-def download_model_if_missing(model_id: str, local_dir: Path):
-    if not local_dir.exists():
-        logger.info(f"Downloading {model_id} to {local_dir} ...")
-        subprocess.run([
-            "huggingface-cli", "download", model_id,
-            "--local-dir", str(local_dir)
-        ], check=True)
-    else:
-        logger.info(f"Model already exists at {local_dir}, skipping download.")
-
-download_model_if_missing(LLM_HF_MODEL_ID, LLM_LOCAL_DIR)
-download_model_if_missing(IMAGE_HF_MODEL_ID, IMAGE_LOCAL_DIR)
-
-# ----- Step 1: Export Models if Needed -----
+# ----- Step 1: Export Models if Needed (will handle download internally) -----
 logger.info("Checking and exporting LLM + Text2Image models if necessary...")
 convert_chat_model(LLM_MODEL_TYPE, PRECISION, MODEL_DIR)
 convert_image_model(IMAGE_MODEL_TYPE, PRECISION, MODEL_DIR)
