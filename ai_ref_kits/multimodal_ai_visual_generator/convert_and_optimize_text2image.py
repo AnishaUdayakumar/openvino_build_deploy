@@ -132,7 +132,7 @@ if __name__ == "__main__":
             print(f"  {i}. {key}")
         choice = input("Enter model number to export: ").strip()
         if not choice.isdigit() or not (1 <= int(choice) <= len(model_keys)):
-            print("Invalid choice. Exiting.")
+            print("Invalid choice. Exiting")
             exit(1)
         args.image_model_type = model_keys[int(choice) - 1]
 

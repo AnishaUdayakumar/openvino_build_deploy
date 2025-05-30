@@ -74,7 +74,7 @@ try:
     logger.info("Scene prompt generation test passed. Example: %s", scenes)
 
     # ----- Step 4: Test Image Generation -----
-    logger.info("Testing /generate_images endpoint....")
+    logger.info("Testing /generate_images endpoint...")
     response2 = requests.post(
         "http://localhost:8000/generate_images",
         json={"prompt": scenes[0]}
@@ -84,6 +84,6 @@ try:
     logger.info("Image generation test passed. Base64 (truncated): %s", image[:100])
 
 finally:
-    logger.info("Shutting down FastAPI server....")
+    logger.info("Shutting down FastAPI server...")
     process.terminate()
     process.wait()
