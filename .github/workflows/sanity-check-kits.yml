@@ -63,6 +63,7 @@ jobs:
           python: ${{ matrix.python }}
           project: ${{ matrix.subproject }}
       - name: Login to HF
+        if: ${{ secrets.HF_TOKEN != '' }}
         shell: bash
         run: |
           huggingface-cli login --token ${{ secrets.HF_TOKEN }}
