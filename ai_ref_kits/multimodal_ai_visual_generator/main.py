@@ -11,6 +11,7 @@ import base64
 import sys
 import yaml
 import openvino_genai as ov_genai
+import openvino as ov
 import logging
 import random
 
