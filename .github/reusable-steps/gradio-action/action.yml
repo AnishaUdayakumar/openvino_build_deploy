@@ -30,7 +30,15 @@ runs:
 
         # Wait for the specific log message
         timeout ${{ inputs.timeout }} bash -c "
-          (tail -f gradio_log.txt &) | awk '/Demo is ready!/ {exit}'
+          for i in {1..3600}; do
+            if grep -q 'Demo is ready!' gradio_log.txt; then
+              echo 'Log message detected.'
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'Timeout waiting for readiness.'
+          exit 1
         "
 
         # Capture the readiness status
