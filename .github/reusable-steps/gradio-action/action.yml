@@ -54,28 +54,33 @@ runs:
       shell: powershell
       run: |
         cd ${{ inputs.project }}
+        Write-Output "==> Running script: ${{ inputs.script }}"
 
-        # Start the Gradio app in the background and redirect both output and error to the same file
-        Start-Process -NoNewWindow -FilePath "python" -ArgumentList "${{ inputs.script }}" -RedirectStandardOutput gradio_stdout.txt -RedirectStandardError gradio_stderr.txt
+        if ("${{ inputs.script }}" -like "*test.py") {
+          Write-Output "==> Detected test script. Running in foreground..."
+          python "${{ inputs.script }}" 2>&1 | Tee-Object gradio_log.txt
+        } else {
+          Write-Output "==> Detected long-running app. Starting in background..."
+          $proc = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "${{ inputs.script }}" `
+                   -RedirectStandardOutput gradio_stdout.txt -RedirectStandardError gradio_stderr.txt -PassThru
+          $app_pid = $proc.Id
+          Write-Output "==> App PID: $app_pid"
+    
+          $start_time = Get-Date
+          $timeout = ${{ inputs.timeout }}
 
-        # Wait a moment to ensure the process starts
-        Start-Sleep -Seconds 5
 
-        # Assign process ID
-        $app_pid = (Get-Process | Where-Object { $_.Name -eq "python.*" }).Id
-
-        $timeout = ${{ inputs.timeout }}
-        # Wait for the specific log message
-        $start_time = Get-Date
-        Get-Content -Wait gradio_stderr.txt, gradio_stdout.txt | ForEach-Object {
-          if ($_ -match "Demo is ready!") { break }
-          if (((Get-Date) - $start_time).TotalSeconds -ge $timeout) {
-            exit 1
+          while ($true) {
+            $content = Get-Content -Path gradio_stdout.txt, gradio_stderr.txt -Raw
+            if ($content -match "Demo is ready!") { break }
+            if (((Get-Date) - $start_time).TotalSeconds -ge $timeout) {
+              Write-Output "==> Timeout waiting for readiness."
+              exit 1
+            }
+            Start-Sleep -Seconds 2
           }
+
+          Write-Output "==> Readiness check completed. Stopping background process..."
+          Stop-Process -Id $app_pid -Force -ErrorAction SilentlyContinue
+          exit 0
         }
-
-        # Stop the Gradio app process
-        Stop-Process -Id $app_pid -Force -ErrorAction SilentlyContinue
-
-        # Exit with the readiness check status
-        exit 0
