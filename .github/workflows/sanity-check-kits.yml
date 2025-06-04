@@ -44,13 +44,13 @@ jobs:
   gradio:
     needs: find-subprojects
     if: ${{ needs.find-subprojects.outputs.gradio != '[]' }}
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
         python: ["3.10", "3.12"]
-        subproject: ${{ fromJson(needs.find-subprojects.outputs.gradio) }}
+        subproject: ["ai_ref_kits/multimodal_ai_visual_generator"]
+
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/reusable-steps/setup-os

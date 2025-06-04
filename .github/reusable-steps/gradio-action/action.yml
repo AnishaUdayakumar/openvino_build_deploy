@@ -29,26 +29,22 @@ runs:
             python ${{ inputs.script }} 2>&1 | tee gradio_log.txt &
           fi
         fi
-        
-        # Assign process ID
+
         app_pid=$(ps aux | grep -i '[p]ython ${{ inputs.script }}' | awk '{print $2}')
 
-        # Wait for the specific log message
         timeout ${{ inputs.timeout }} bash -c "
           (tail -f gradio_log.txt &) | awk '/Demo is ready!/ {exit}'
         "
 
-        # Capture the readiness status
         status=$?
 
-        # Stop the Gradio app process
         echo "Stopping the Gradio app..."
         pkill -P $app_pid || echo "No child processes to kill."
         kill $app_pid || echo "App process already terminated."
         wait $app_pid || echo "App process cleanup complete."
 
-        # Exit with the readiness check status
         exit $status
+
     - name: Run Gradio App (Windows)
       if: ${{ runner.os == 'Windows' }}
       shell: powershell
@@ -56,40 +52,49 @@ runs:
         cd ${{ inputs.project }}
         Write-Output "==> Running script: ${{ inputs.script }}"
 
+        $logFile = "gradio_log.txt"
+        $proc = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "${{ inputs.script }}" `
+                 -RedirectStandardOutput $logFile -RedirectStandardError $logFile -PassThru
+        $app_pid = $proc.Id
+        Write-Output "==> App PID: $app_pid"
+
+        $start_time = Get-Date
+        $timeout = ${{ inputs.timeout }}
+        $success = $false
+
         if ("${{ inputs.script }}" -like "*test.py") {
-          Write-Output "==> Detected test script. Running in foreground..."
-          
-          $logFile = "gradio_log.txt"
-          python "${{ inputs.script }}" *> gradio_log.txt
-          type gradio_log.txt
-          
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Script failed with exit code $LASTEXITCODE"
-            exit $LASTEXITCODE
+          Write-Output "==> test.py detected. Waiting for process to complete..."
+          $proc.WaitForExit()
+          Get-Content -Path $logFile
+          if ($proc.ExitCode -eq 0) {
+            $success = $true
+          } else {
+            Write-Error "Script exited with code $($proc.ExitCode)"
           }
-          
         } else {
-          Write-Output "==> Detected long-running app. Starting in background..."
-          $proc = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "${{ inputs.script }}" `
-                   -RedirectStandardOutput gradio_stdout.txt -RedirectStandardError gradio_stderr.txt -PassThru
-          $app_pid = $proc.Id
-          Write-Output "==> App PID: $app_pid"
-    
-          $start_time = Get-Date
-          $timeout = ${{ inputs.timeout }}
-
-
+          Write-Output "==> Waiting for readiness message: 'Demo is ready!'"
           while ($true) {
-            $content = Get-Content -Path gradio_stdout.txt, gradio_stderr.txt -Raw
-            if ($content -match "Demo is ready!") { break }
+            if (Test-Path $logFile) {
+              $content = Get-Content -Path $logFile -Raw
+              if ($content -match "Demo is ready!") {
+                $success = $true
+                break
+              }
+            }
             if (((Get-Date) - $start_time).TotalSeconds -ge $timeout) {
               Write-Output "==> Timeout waiting for readiness."
-              exit 1
+              break
             }
             Start-Sleep -Seconds 2
           }
 
-          Write-Output "==> Readiness check completed. Stopping background process..."
+          Write-Output "==> Stopping background process..."
           Stop-Process -Id $app_pid -Force -ErrorAction SilentlyContinue
-          exit 0
+        }
+
+        Write-Output "==> Gradio Log Output:"
+        Get-Content -Path $logFile
+
+        if (-not $success) {
+          exit 1
         }
