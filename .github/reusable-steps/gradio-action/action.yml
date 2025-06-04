@@ -60,16 +60,14 @@ runs:
           Write-Output "==> Detected test script. Running in foreground..."
           
           $logFile = "gradio_log.txt"
-          $proc = Start-Process -FilePath "python" -ArgumentList "${{ inputs.script }}" `
-                   -RedirectStandardOutput $logFile -RedirectStandardError $logFile -PassThru
-          $proc.WaitForExit()
+          python "${{ inputs.script }}" *> gradio_log.txt
+          type gradio_log.txt
           
-          # Show the output in CI logs
-          Get-Content $logFile
-          if ($proc.ExitCode -ne 0) {
-            Write-Error "Test script failed with exit code $($proc.ExitCode)"
-            exit $proc.ExitCode
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Script failed with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
           }
+          
         } else {
           Write-Output "==> Detected long-running app. Starting in background..."
           $proc = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "${{ inputs.script }}" `
