@@ -58,7 +58,18 @@ runs:
 
         if ("${{ inputs.script }}" -like "*test.py") {
           Write-Output "==> Detected test script. Running in foreground..."
-          python "${{ inputs.script }}" 2>&1 | Tee-Object gradio_log.txt
+          
+          $logFile = "gradio_log.txt"
+          $proc = Start-Process -FilePath "python" -ArgumentList "${{ inputs.script }}" `
+                   -RedirectStandardOutput $logFile -RedirectStandardError $logFile -PassThru
+          $proc.WaitForExit()
+          
+          # Show the output in CI logs
+          Get-Content $logFile
+          if ($proc.ExitCode -ne 0) {
+            Write-Error "Test script failed with exit code $($proc.ExitCode)"
+            exit $proc.ExitCode
+          }
         } else {
           Write-Output "==> Detected long-running app. Starting in background..."
           $proc = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "${{ inputs.script }}" `
