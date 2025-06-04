@@ -58,13 +58,18 @@ runs:
 
         if ("${{ inputs.script }}" -like "*test.py") {
           Write-Output "==> test.py detected. Running in foreground..."
-          python "${{ inputs.script }}" *> gradio_log.txt
+          
+          # Avoid redirecting stdout/stderr together to the same file
+          $output = python "${{ inputs.script }}"
+          $output | Out-File -FilePath gradio_log.txt -Encoding utf8
           Get-Content -Path gradio_log.txt
+
           if ($LASTEXITCODE -eq 0) {
             $success = $true
           } else {
             Write-Error "Script exited with code $LASTEXITCODE"
           }
+
         } else {
           Write-Output "==> Long-running app detected. Launching in background..."
           $proc = Start-Process -NoNewWindow -FilePath "python" -ArgumentList "${{ inputs.script }}" `
@@ -92,15 +97,9 @@ runs:
         }
 
         Write-Output "==> Gradio Log Output:"
-        if (Test-Path gradio_log.txt) {
-          Get-Content gradio_log.txt
-        }
-        if (Test-Path gradio_stdout.txt) {
-          Get-Content gradio_stdout.txt
-        }
-        if (Test-Path gradio_stderr.txt) {
-          Get-Content gradio_stderr.txt
-        }
+        if (Test-Path gradio_log.txt) { Get-Content gradio_log.txt }
+        if (Test-Path gradio_stdout.txt) { Get-Content gradio_stdout.txt }
+        if (Test-Path gradio_stderr.txt) { Get-Content gradio_stderr.txt }
 
         if (-not $success) {
           exit 1
